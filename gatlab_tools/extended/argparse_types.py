@@ -7,7 +7,7 @@ Extended argument types for argparse
 
 import argparse
 import codecs
-
+import operator
 
 __author__ = "Bulak Arpat"
 __copyright__ = "Copyright 2017, Bulak Arpat"
@@ -40,7 +40,7 @@ def int_range(i_min, i_max):
     return _custom_range
 
 
-def capped_tuple(mins, maxs):
+def capped_tuple(mins, maxs, increasing=None):
     """
     Defines a tuple of integers, each limited to mins and maxs by setup.
 
@@ -49,6 +49,8 @@ def capped_tuple(mins, maxs):
             value for each integer variable in the argument
         maxs: :obj:`tuple` or :obj:`list` of integers defining the maximum
             value for each integer variable in the argument
+        increasing :obj:`bool` or :obj:`None` if set, True or False will force
+            the values to be in increasing or decreasing order, respectively
     """
     if not (isinstance(mins, (tuple, list)) and
             isinstance(maxs, (tuple, list)) and
@@ -72,6 +74,13 @@ def capped_tuple(mins, maxs):
             raise argparse.ArgumentTypeError(
                 '{} is not within limits set by min={} and max={}'.format(
                     arg_tuple, mins, maxs))
+        if increasing is not None:
+            op = (operator.ge, operator.le)[int(bool(increasing))]
+            order = ("decreasing", "increasing")[int(bool(increasing))]
+            res = all(op(i, j) for i, j in zip(arg_tuple, arg_tuple[1:]))
+            if not res:
+                raise argparse.ArgumentTypeError(
+                    '{} needs to be "{}", but is not'.format(arg_tuple, order))
         return arg_tuple
     return _custom_tuple
 
